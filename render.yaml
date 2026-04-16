@@ -1,0 +1,35 @@
+## render.yaml
+## Infraestructura completa del ERP DCM declarada como código.
+## Render lee este archivo automáticamente al conectar el repo.
+##
+## Servicios que crea:
+##   1. erp-dcm-api   → Web Service (FastAPI, Python)
+##   2. erp-dcm-db    → PostgreSQL managed database
+
+services:
+  - type: web
+    name: erp-dcm-api
+    runtime: python
+    region: oregon          # Cambiar a "frankfurt" si querés Europa
+    plan: free              # Cambiar a "starter" ($7/mes) cuando vayas a producción
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: erp-dcm-db
+          property: connectionString
+      - key: DWG_BASE_PATH
+        value: /tmp/dwg_local   # En producción real: ruta UNC de la red interna
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+
+databases:
+  - name: erp-dcm-db
+    databaseName: erp_dcm
+    user: erp_dcm_user
+    region: oregon
+    plan: free               # Free tier: 1 GB, expira a los 90 días (suficiente para dev)
+                             # Cambiar a "starter" ($7/mes) para producción
